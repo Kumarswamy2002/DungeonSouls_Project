@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ../Backend
+      dockerfile: Dockerfile
+    container_name: dungeon_souls_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_SERVER=postgres
+      - POSTGRES_USER=dungeon_admin
+      - POSTGRES_PASSWORD=dungeon_secure_pass_2026
+      - POSTGRES_DB=dungeon_souls_db
+      - POSTGRES_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - SECRET_KEY=dungeon-souls-production-jwt-secret-key-32chars
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - dungeon_network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: dungeon_souls_postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=dungeon_admin
+      - POSTGRES_PASSWORD=dungeon_secure_pass_2026
+      - POSTGRES_DB=dungeon_souls_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dungeon_admin -d dungeon_souls_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dungeon_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: dungeon_souls_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dungeon_network
+
+networks:
+  dungeon_network:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:

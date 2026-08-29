@@ -1,0 +1,20 @@
+name: Build & Docker Packaging
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  docker-build:
+    name: Build & Verify Docker Containers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./Backend
+          push: false
+          tags: dungeon-souls-api:latest
