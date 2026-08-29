@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DUNGEON SOULS — Action RPG & Procedural Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #090a0f;
+      --bg-card: rgba(18, 22, 36, 0.85);
+      --bg-card-hover: rgba(28, 34, 54, 0.95);
+      --border-color: rgba(212, 175, 55, 0.3);
+      --border-bright: #d4af37;
+      --gold: #f5c542;
+      --crimson: #e63946;
+      --mana-blue: #3a86ff;
+      --stamina-green: #2ec4b6;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --font-title: 'Cinzel', serif;
+      --font-body: 'Inter', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-dark);
+      background-image: radial-gradient(circle at 50% 20%, rgba(26, 16, 60, 0.6), transparent 70%),
+                        radial-gradient(circle at 80% 80%, rgba(40, 10, 20, 0.4), transparent 60%);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    header {
+      padding: 1.5rem 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(9, 10, 15, 0.9);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .brand h1 {
+      font-family: var(--font-title);
+      font-size: 1.8rem;
+      letter-spacing: 3px;
+      color: var(--gold);
+      text-shadow: 0 0 20px rgba(245, 197, 66, 0.4);
+    }
+    .badge {
+      background: rgba(245, 197, 66, 0.15);
+      border: 1px solid var(--border-color);
+      color: var(--gold);
+      font-size: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    nav {
+      display: flex;
+      gap: 1rem;
+    }
+    .nav-btn {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      font-family: var(--font-title);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .nav-btn.active, .nav-btn:hover {
+      border-color: var(--gold);
+      background: rgba(245, 197, 66, 0.1);
+      color: var(--gold);
+      box-shadow: 0 0 15px rgba(245, 197, 66, 0.2);
+    }
+
+    main {
+      flex: 1;
+      padding: 2.5rem 3rem;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Grid Layouts */
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 2.5rem;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 2rem;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+    .card h2 {
+      font-family: var(--font-title);
+      color: var(--gold);
+      font-size: 1.4rem;
+      margin-bottom: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Character Selection */
+    .class-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .class-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+    .class-card.selected {
+      border-color: var(--gold);
+      background: rgba(245, 197, 66, 0.15);
+      box-shadow: 0 0 15px rgba(245, 197, 66, 0.25);
+    }
+    .class-icon { font-size: 2rem; margin-bottom: 0.5rem; display: block; }
+    .class-name { font-weight: 600; font-size: 0.95rem; color: #fff; }
+
+    /* HUD Globes */
+    .stat-globes {
+      display: flex;
+      justify-content: space-around;
+      margin: 1.5rem 0;
+      gap: 1.5rem;
+    }
+    .globe-wrapper {
+      text-align: center;
+      flex: 1;
+    }
+    .stat-bar-bg {
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      height: 14px;
+      border-radius: 7px;
+      overflow: hidden;
+      margin-top: 0.4rem;
+    }
+    .stat-fill {
+      height: 100%;
+      border-radius: 7px;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .fill-hp { background: linear-gradient(90deg, #b91c1c, #ef4444); }
+    .fill-mana { background: linear-gradient(90deg, #1d4ed8, #3b82f6); }
+    .fill-stamina { background: linear-gradient(90deg, #0f766e, #14b8a6); }
+
+    /* Combat Arena & Canvas */
+    .arena-container {
+      position: relative;
+      background: #000;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      overflow: hidden;
+      height: 480px;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .combat-controls {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.8rem;
+      margin-top: 1.2rem;
+    }
+    .ability-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      padding: 0.8rem 0.5rem;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.2s;
+    }
+    .ability-btn:hover:not(:disabled) {
+      background: rgba(245, 197, 66, 0.2);
+      border-color: var(--gold);
+      transform: translateY(-2px);
+    }
+    .ability-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .key-badge {
+      font-size: 0.7rem;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      color: var(--gold);
+    }
+
+    .combat-log {
+      height: 180px;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 0.8rem;
+      font-family: monospace;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      margin-top: 1rem;
+    }
+    .log-entry { margin-bottom: 0.3rem; }
+    .log-hit { color: #f87171; }
+    .log-crit { color: #facc15; font-weight: bold; }
+    .log-spell { color: #60a5fa; }
+    .log-reward { color: #4ade80; }
+
+    /* Dungeon Viewer Controls */
+    .controls-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
+    select, input, .action-btn {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border-color);
+      color: #fff;
+      padding: 0.6rem 1rem;
+      border-radius: 6px;
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+    }
+    .action-btn {
+      background: linear-gradient(135deg, rgba(245, 197, 66, 0.2), rgba(245, 197, 66, 0.05));
+      color: var(--gold);
+      font-weight: 600;
+      cursor: pointer;
+      border-color: var(--gold);
+      transition: all 0.2s;
+    }
+    .action-btn:hover {
+      background: var(--gold);
+      color: #000;
+      box-shadow: 0 0 20px rgba(245, 197, 66, 0.4);
+    }
+
+    footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 1.5rem 3rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      background: rgba(9, 10, 15, 0.95);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <h1>DUNGEON SOULS</h1>
+      <span class="badge">v1.0.0 LIVE</span>
+    </div>
+    <nav>
+      <button class="nav-btn active" onclick="switchTab('game')">🎮 Playable Arena</button>
+      <button class="nav-btn" onclick="switchTab('dungeon')">🗺️ Dungeon Generator</button>
+      <button class="nav-btn" onclick="switchTab('api')">⚡ REST API & Docs</button>
+      <button class="nav-btn" onclick="switchTab('leaderboard')">🏆 Leaderboard</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- TAB 1: PLAYABLE ARENA -->
+    <div id="tab-game" class="tab-content active">
+      <div class="hero-grid">
+        <div class="card">
+          <h2>
+            <span>Hero & Loadout</span>
+            <span id="player-level" class="badge">Level 1 Warrior</span>
+          </h2>
+
+          <div class="class-selector">
+            <div class="class-card selected" onclick="selectClass('Warrior')">
+              <span class="class-icon">🛡️</span>
+              <div class="class-name">Warrior</div>
+            </div>
+            <div class="class-card" onclick="selectClass('Mage')">
+              <span class="class-icon">🔮</span>
+              <div class="class-name">Mage</div>
+            </div>
+            <div class="class-card" onclick="selectClass('Rogue')">
+              <span class="class-icon">🗡️</span>
+              <div class="class-name">Rogue</div>
+            </div>
+          </div>
+
+          <div class="stat-globes">
+            <div class="globe-wrapper">
+              <div style="font-size: 0.8rem; color: #f87171;">HEALTH (<span id="hp-val">150</span>/150)</div>
+              <div class="stat-bar-bg"><div id="hp-bar" class="stat-fill fill-hp" style="width: 100%;"></div></div>
+            </div>
+            <div class="globe-wrapper">
+              <div style="font-size: 0.8rem; color: #60a5fa;">MANA (<span id="mana-val">50</span>/50)</div>
+              <div class="stat-bar-bg"><div id="mana-bar" class="stat-fill fill-mana" style="width: 100%;"></div></div>
+            </div>
+            <div class="globe-wrapper">
+              <div style="font-size: 0.8rem; color: #2dd4bf;">STAMINA (<span id="stam-val">100</span>/100)</div>
+              <div class="stat-bar-bg"><div id="stam-bar" class="stat-fill fill-stamina" style="width: 100%;"></div></div>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+            <span>💰 Gold: <b id="gold-val" style="color: var(--gold);">120</b></span>
+            <span>✨ Soul Essence: <b id="soul-val" style="color: #c084fc;">45</b></span>
+            <span>🗡️ Attack Power: <b id="atk-val" style="color: #fff;">25</b></span>
+          </div>
+
+          <div class="combat-controls">
+            <button class="ability-btn" id="btn-q" onclick="castAbility(0)">
+              <span class="key-badge">Q</span>
+              <span id="ab-0-name">Shield Bash</span>
+            </button>
+            <button class="ability-btn" id="btn-w" onclick="castAbility(1)">
+              <span class="key-badge">W</span>
+              <span id="ab-1-name">Whirlwind</span>
+            </button>
+            <button class="ability-btn" id="btn-e" onclick="castAbility(2)">
+              <span class="key-badge">E</span>
+              <span id="ab-2-name">Ground Slam</span>
+            </button>
+            <button class="ability-btn" id="btn-r" onclick="castAbility(3)">
+              <span class="key-badge">R</span>
+              <span id="ab-3-name">Berserk</span>
+            </button>
+          </div>
+
+          <div class="combat-log" id="combat-log">
+            <div class="log-entry" style="color: var(--gold);">[DUNGEON SOULS] Ready for battle. Click abilities or press Q/W/E/R!</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>
+            <span>Encounter Arena</span>
+            <span id="boss-badge" class="badge" style="background: rgba(230, 57, 70, 0.2); color: #f87171;">BOSS: The Bone King</span>
+          </h2>
+
+          <div class="arena-container">
+            <canvas id="arenaCanvas"></canvas>
+          </div>
+
+          <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+            <button class="action-btn" style="flex: 1;" onclick="resetEncounter('Bone King')">💀 Summon Bone King (Crypt)</button>
+            <button class="action-btn" style="flex: 1;" onclick="resetEncounter('Frost Queen')">❄️ Summon Frost Queen (Caverns)</button>
+            <button class="action-btn" style="flex: 1;" onclick="resetEncounter('Inferno Lord')">🔥 Summon Inferno Lord (Lava)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: PROCEDURAL DUNGEON GENERATOR -->
+    <div id="tab-dungeon" class="tab-content">
+      <div class="card">
+        <h2>Procedural Dungeon Seed Visualizer & Corridor Routing</h2>
+        <div class="controls-row">
+          <select id="biomeSelect">
+            <option value="Forgotten Crypt">Forgotten Crypt</option>
+            <option value="Dark Forest">Dark Forest</option>
+            <option value="Ancient Ruins">Ancient Ruins</option>
+            <option value="Frozen Caverns">Frozen Caverns</option>
+            <option value="Lava Depths">Lava Depths</option>
+            <option value="Abyss">The Abyss</option>
+          </select>
+          <input type="number" id="seedInput" value="424242" style="width: 140px;" placeholder="Seed">
+          <button class="action-btn" onclick="generateDungeonMap()">🎲 Generate New Dungeon</button>
+        </div>
+        <div class="arena-container" style="height: 520px;">
+          <canvas id="dungeonCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: API & DOCS -->
+    <div id="tab-api" class="tab-content">
+      <div class="card">
+        <h2>Backend Cloud REST Services</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">FastAPI + PostgreSQL + Redis active endpoints:</p>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+          <a href="/docs" target="_blank" class="action-btn" style="text-decoration: none;">📖 Open Interactive Swagger UI</a>
+          <a href="/health" target="_blank" class="action-btn" style="text-decoration: none;">🩺 Health Check Endpoint</a>
+          <a href="/redoc" target="_blank" class="action-btn" style="text-decoration: none;">📚 ReDoc Documentation</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: LEADERBOARD -->
+    <div id="tab-leaderboard" class="tab-content">
+      <div class="card">
+        <h2>Global High Score Hall of Fame</h2>
+        <div style="margin-top: 1rem; font-family: monospace; font-size: 0.95rem;">
+          <div style="display: flex; justify-content: space-between; padding: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--gold);">
+            <span>RANK / HERO</span>
+            <span>CATEGORY</span>
+            <span>SCORE / FLOOR</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <span>🥇 EldoriaChampion (Warrior)</span>
+            <span>Highest Floor</span>
+            <span style="color: #4ade80;">Floor 45 (12,850 pts)</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <span>🥈 ShadowViper (Rogue)</span>
+            <span>Speed Run</span>
+            <span style="color: #4ade80;">03m 42s</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.8rem;">
+            <span>🥉 ArchonIgnis (Mage)</span>
+            <span>Boss Damage</span>
+            <span style="color: #4ade80;">48,200 dmg</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    Dungeon Souls Action RPG &copy; 2026. Powered by Decoupled C# Domain & FastAPI Cloud Architecture.
+  </footer>
+
+  <script>
+    // Tab switching
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + tabId).classList.add('active');
+      event.target.classList.add('active');
+      if (tabId === 'dungeon') generateDungeonMap();
+    }
+
+    // Game Simulation State
+    let currentClass = 'Warrior';
+    let player = { hp: 150, maxHp: 150, mana: 50, maxMana: 50, stam: 100, maxStam: 100, atk: 25, def: 25, x: 80, y: 240, level: 1, gold: 120, soul: 45 };
+    let boss = { name: 'The Bone King', hp: 850, maxHp: 850, x: 520, y: 240, phase: 1, color: '#e63946' };
+    let particles = [];
+    let damageNumbers = [];
+
+    const classData = {
+      Warrior: { hp: 150, mana: 50, stam: 100, atk: 25, abilities: ["Shield Bash", "Whirlwind", "Ground Slam", "Berserk"] },
+      Mage: { hp: 80, mana: 160, stam: 80, atk: 38, abilities: ["Fireball", "Ice Spike", "Lightning", "Meteor"] },
+      Rogue: { hp: 90, mana: 60, stam: 120, atk: 30, abilities: ["Dash", "Backstab", "Smoke Bomb", "Shadow Step"] }
+    };
+
+    function selectClass(c) {
+      currentClass = c;
+      document.querySelectorAll('.class-card').forEach(el => el.classList.remove('selected'));
+      event.currentTarget.classList.add('selected');
+      const d = classData[c];
+      player.hp = player.maxHp = d.hp;
+      player.mana = player.maxMana = d.mana;
+      player.stam = player.maxStam = d.stam;
+      player.atk = d.atk;
+      document.getElementById('player-level').innerText = `Level ${player.level} ${c}`;
+      document.getElementById('atk-val').innerText = player.atk;
+      for (let i = 0; i < 4; i++) {
+        document.getElementById(`ab-${i}-name`).innerText = d.abilities[i];
+      }
+      updateHUD();
+      addLog(`Selected class: ${c}`, 'var(--gold)');
+    }
+
+    function addLog(msg, color = '#fff') {
+      const log = document.getElementById('combat-log');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.style.color = color;
+      entry.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      log.appendChild(entry);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function updateHUD() {
+      document.getElementById('hp-val').innerText = Math.max(0, Math.round(player.hp));
+      document.getElementById('hp-bar').style.width = (player.hp / player.maxHp * 100) + '%';
+      document.getElementById('mana-val').innerText = Math.max(0, Math.round(player.mana));
+      document.getElementById('mana-bar').style.width = (player.mana / player.maxMana * 100) + '%';
+      document.getElementById('stam-val').innerText = Math.max(0, Math.round(player.stam));
+      document.getElementById('stam-bar').style.width = (player.stam / player.maxStam * 100) + '%';
+      document.getElementById('gold-val').innerText = player.gold;
+      document.getElementById('soul-val').innerText = player.soul;
+    }
+
+    function castAbility(idx) {
+      if (boss.hp <= 0) { addLog('Boss already defeated! Summon a new foe.', '#4ade80'); return; }
+      const abName = classData[currentClass].abilities[idx];
+      let dmg = player.atk * (1.2 + idx * 0.5);
+      let isCrit = Math.random() < 0.25;
+      if (isCrit) dmg *= 1.8;
+      dmg = Math.round(dmg);
+
+      boss.hp -= dmg;
+      damageNumbers.push({ text: isCrit ? `CRIT ${dmg}!` : `${dmg}`, x: boss.x + (Math.random()*40-20), y: boss.y - 20, color: isCrit ? '#facc15' : '#f87171', alpha: 1.0 });
+
+      for(let i=0; i<15; i++) {
+        particles.push({ x: boss.x, y: boss.y, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8, color: isCrit ? '#facc15' : '#e63946', life: 30 });
+      }
+
+      addLog(`Hero casts [${abName}] -> Dealt ${dmg} damage!`, isCrit ? '#facc15' : '#60a5fa');
+
+      // Check Boss Phases
+      let hpPercent = (boss.hp / boss.maxHp) * 100;
+      if (hpPercent <= 0) {
+        boss.hp = 0;
+        addLog(`🏆 ${boss.name} DEFEATED! Gained +500 Gold, +120 Soul Essence!`, '#4ade80');
+        player.gold += 500;
+        player.soul += 120;
+        updateHUD();
+      } else if (hpPercent <= 15 && boss.phase < 4) {
+        boss.phase = 4;
+        addLog(`⚠️ ${boss.name} ENRAGES! Attacks become relentless!`, '#ef4444');
+      } else if (hpPercent <= 40 && boss.phase < 3) {
+        boss.phase = 3;
+        addLog(`⚡ ${boss.name} enters Phase 3! Summons arena hazards!`, '#c084fc');
+      } else if (hpPercent <= 70 && boss.phase < 2) {
+        boss.phase = 2;
+        addLog(`🛡️ ${boss.name} enters Phase 2! Attack Power increased!`, '#f59e0b');
+      }
+
+      // Boss counter-attack
+      if (boss.hp > 0) {
+        setTimeout(() => {
+          let bDmg = Math.round(15 + Math.random() * 10 * boss.phase);
+          player.hp = Math.max(0, player.hp - bDmg);
+          damageNumbers.push({ text: `-${bDmg}`, x: player.x, y: player.y - 20, color: '#ef4444', alpha: 1.0 });
+          addLog(`${boss.name} counter-attacks! Hero takes ${bDmg} damage.`, '#ef4444');
+          updateHUD();
+        }, 400);
+      }
+    }
+
+    function resetEncounter(bName) {
+      boss.name = bName;
+      boss.hp = boss.maxHp = bName === 'Inferno Lord' ? 1200 : (bName === 'Frost Queen' ? 950 : 850);
+      boss.phase = 1;
+      document.getElementById('boss-badge').innerText = `BOSS: ${bName}`;
+      addLog(`Summoned new Boss: ${bName}! Prepare for battle.`, 'var(--gold)');
+      updateHUD();
+    }
+
+    // Keyboard bindings Q, W, E, R
+    window.addEventListener('keydown', e => {
+      if (e.key === 'q' || e.key === 'Q') castAbility(0);
+      if (e.key === 'w' || e.key === 'W') castAbility(1);
+      if (e.key === 'e' || e.key === 'E') castAbility(2);
+      if (e.key === 'r' || e.key === 'R') castAbility(3);
+    });
+
+    // Canvas Loop
+    const canvas = document.getElementById('arenaCanvas');
+    const ctx = canvas.getContext('2d');
+    function resizeCanvas() {
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function renderArena() {
+      ctx.fillStyle = '#0a0d16';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Arena Grid lines
+      ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+      for (let x = 0; x < canvas.width; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
+      for (let y = 0; y < canvas.height; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
+
+      // Draw Player
+      ctx.save();
+      ctx.fillStyle = '#38bdf8';
+      ctx.shadowColor = '#38bdf8';
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, 22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px Inter';
+      ctx.textAlign = 'center';
+      ctx.fillText('HERO', player.x, player.y - 30);
+
+      // Draw Boss
+      if (boss.hp > 0) {
+        ctx.save();
+        ctx.fillStyle = boss.phase >= 4 ? '#b91c1c' : (boss.phase === 3 ? '#9333ea' : '#dc2626');
+        ctx.shadowColor = ctx.fillStyle;
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.arc(boss.x, boss.y, 35, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Boss Health Bar above boss
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(boss.x - 50, boss.y - 60, 100, 8);
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(boss.x - 50, boss.y - 60, (boss.hp / boss.maxHp) * 100, 8);
+
+        ctx.fillStyle = '#f5c542';
+        ctx.font = 'bold 12px Cinzel';
+        ctx.fillText(boss.name, boss.x, boss.y - 70);
+      }
+
+      // Draw Particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx; p.y += p.vy; p.life--;
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fill();
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+
+      // Draw Floating Damage Numbers
+      for (let i = damageNumbers.length - 1; i >= 0; i--) {
+        const d = damageNumbers[i];
+        d.y -= 0.8; d.alpha -= 0.02;
+        ctx.fillStyle = d.color;
+        ctx.globalAlpha = Math.max(0, d.alpha);
+        ctx.font = 'bold 14px Inter';
+        ctx.fillText(d.text, d.x, d.y);
+        ctx.globalAlpha = 1.0;
+        if (d.alpha <= 0) damageNumbers.splice(i, 1);
+      }
+
+      requestAnimationFrame(renderArena);
+    }
+    renderArena();
+
+    // Dungeon Canvas Map Visualizer
+    function generateDungeonMap() {
+      const dCanvas = document.getElementById('dungeonCanvas');
+      const dCtx = dCanvas.getContext('2d');
+      dCanvas.width = dCanvas.parentElement.clientWidth;
+      dCanvas.height = dCanvas.parentElement.clientHeight;
+
+      dCtx.fillStyle = '#05070a';
+      dCtx.fillRect(0, 0, dCanvas.width, dCanvas.height);
+
+      const seed = parseInt(document.getElementById('seedInput').value) || 424242;
+      let rng = seed;
+      function nextRng(min, max) { rng = (rng * 9301 + 49297) % 233280; return min + (rng / 233280) * (max - min); }
+
+      const rooms = [];
+      for (let i = 0; i < 9; i++) {
+        const w = nextRng(60, 110);
+        const h = nextRng(50, 90);
+        const x = nextRng(40, dCanvas.width - w - 40);
+        const y = nextRng(40, dCanvas.height - h - 40);
+        rooms.push({ id: i, x, y, w, h, cx: x + w/2, cy: y + h/2 });
+      }
+
+      // Draw MST Corridors
+      dCtx.strokeStyle = 'rgba(212, 175, 55, 0.6)';
+      dCtx.lineWidth = 4;
+      for (let i = 0; i < rooms.length - 1; i++) {
+        dCtx.beginPath();
+        dCtx.moveTo(rooms[i].cx, rooms[i].cy);
+        dCtx.lineTo(rooms[i+1].cx, rooms[i].cy);
+        dCtx.lineTo(rooms[i+1].cx, rooms[i+1].cy);
+        dCtx.stroke();
+      }
+
+      // Draw Rooms
+      rooms.forEach((r, idx) => {
+        let type = idx === 0 ? 'ENTRANCE' : (idx === rooms.length - 1 ? 'BOSS' : (idx === 3 ? 'TREASURE' : 'COMBAT'));
+        dCtx.fillStyle = type === 'ENTRANCE' ? '#1d4ed8' : (type === 'BOSS' ? '#991b1b' : (type === 'TREASURE' ? '#ca8a04' : '#1e293b'));
+        dCtx.strokeStyle = '#d4af37';
+        dCtx.lineWidth = 2;
+        dCtx.fillRect(r.x, r.y, r.w, r.h);
+        dCtx.strokeRect(r.x, r.y, r.w, r.h);
+
+        dCtx.fillStyle = '#fff';
+        dCtx.font = 'bold 11px Cinzel';
+        dCtx.textAlign = 'center';
+        dCtx.fillText(type, r.cx, r.cy);
+      });
+    }
+  </script>
+</body>
+</html>

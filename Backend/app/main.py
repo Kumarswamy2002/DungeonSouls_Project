@@ -1,6 +1,9 @@
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.api.router import api_router
 from app.database.session import engine
@@ -34,6 +37,25 @@ app.add_middleware(
 )
 
 app.include_router(api_router)
+
+# Mount static folder if exists
+static_path = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(static_path):
+    app.mount("/static", StaticFiles(directory=static_path), name="static")
+
+@app.get("/", response_class=HTMLResponse, tags=["Web App"])
+async def root():
+    index_file = os.path.join(static_path, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
+    return HTMLResponse("<h1>Dungeon Souls Backend Live</h1><p>Visit <a href='/docs'>/docs</a> for API</p>")
+
+@app.get("/play", response_class=HTMLResponse, tags=["Web App"])
+async def play_arena():
+    index_file = os.path.join(static_path, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
+    return FileResponse(index_file)
 
 @app.get("/health", tags=["Health"])
 async def health_check():

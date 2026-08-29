@@ -1,18 +1,19 @@
+import os
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from app.core.config import settings
 from app.database.models import Base
 
-# Create SQLite fallback or PostgreSQL async engine
-database_url = settings.DATABASE_URL
-if "sqlite" in database_url.lower():
-    engine = create_async_engine(database_url, echo=False)
+# Determine database engine
+# If running inside Docker/Postgres environment or if explicitly configured, use postgres; otherwise fallback to aiosqlite
+use_postgres = os.getenv("USE_POSTGRES", "false").lower() == "true" or os.getenv("POSTGRES_SERVER") == "postgres"
+
+if use_postgres:
+    database_url = settings.DATABASE_URL
 else:
-    # Use SQLite in-memory / local fallback if postgres isn't running during standalone tests
-    try:
-        engine = create_async_engine(database_url, echo=False, pool_pre_ping=True)
-    except Exception:
-        engine = create_async_engine("sqlite+aiosqlite:///./dungeon_souls.db", echo=False)
+    database_url = "sqlite+aiosqlite:///./dungeon_souls.db"
+
+engine = create_async_engine(database_url, echo=False)
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
